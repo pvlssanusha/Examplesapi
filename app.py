@@ -1,64 +1,94 @@
 from flask import Flask, request, jsonify
-import requests
-app = Flask(__name__)
-from flask import render_template
-from pymongo import MongoClient
-# Dictionary to store conversation histories for different users
-user_sessions = {}
 import os
-api_key = os.getenv("GEMINI_API_KEY")
-generative_language_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + api_key
-app.config['MONGO_URI'] = os.getenv("mongo_uri")
+import requests
+import json
+from dotenv import load_dotenv
+load_dotenv()
 
-mongo = MongoClient(app.config['MONGO_URI'])
-db = mongo.get_database('Usersessions')
-collection = db.data
-print(db)
-def generate_content(conversation):
-    headers = {'Content-Type': 'application/json'}
-    data = {"contents": conversation}
-    
-    response = requests.post(generative_language_url, headers=headers, json=data)
-    #print("re",response.json())
-    result = response.json()
-    contents = result.get("candidates", [])[0].get("content",[]).get("parts", [])[0].get("text", "")
-    return contents
+app = Flask(__name__)
+
+# Replace 'YOUR_COHERE_API_KEY' with your Cohere API key
+
+# Initialize the Cohere Client with an API Key
+api = os.getenv("GEMINI_API_KEY")
+api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + api
+
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
 
 @app.route('/', methods=['POST'])
-def generate():
-    user_id = request.json.get('user_id', '')
-    user_input = request.json.get('user_input', '')
-    conversation_history=[]
-    # Get or create a conversation history for the user
-    res = db.data.find_one({"userid": user_id})
-    #print("res",res)
-    if res:
-        conversation_history =res.get("history")
-        #print("ch",conversation_history)
-          # Replace 'my_collection' with your collection name
-    else:
-        datavalues={
-            "userid":user_id,
-            "history":conversation_history
+def get_response():
+    try:
+        course = request.get_json().get('course')
+        submodule=request.get_json().get('submodule')
+        target = request.get_json().get('target')
+        # module = request.get_json().get('module')
+        # submodules = request.get_json().get('submodules')
+        
+        # submodules = " , ".join(submodules)
+            # Define the request payload
+        print("started")
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": 
+                            f'''
+            I want to create  3 examples  for submodule {submodule}  for target audience{target}
+            Create only descriptive examples.
+            Give the output in json format as code block.Strictly in json format only:
+            {{
+                    "examplelist":   [
+                                        "Example 1: Description of the first example for {submodule}.",
+                                        "Example 2: Description of the second example for {submodule}.",
+                                        "Example 3: Description of the third example for {submodule}."
+                    ]  
+            }}
+        '''
+                        }
+                    ]
+                }
+            ]
         }
-        collection.insert_one(datavalues)
-    user_part = {"role": "user", "parts": [{"text": user_input}]}
-    conversation_history.append(user_part)
 
-    response_text = generate_content(conversation_history)
+        # Set the headers
+        headers = {
+            "Content-Type": "application/json"
+        }
 
-    model_part = {"role": "model", "parts": [{"text": response_text}]}
-    conversation_history.append(model_part)
-    #print(conversation_history,user_id)
-    filter_criteria = {"userid":user_id}
+        # Make the API call
+        response = requests.post(api_url, json=payload, headers=headers)
+        print(response)
+        if response.status_code == 200:
+            # Parse and print the response JSON
+            response_json = response.json()
+            print(response_json)
+            if (response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="{"):
+            #print(response_json["candidates"][0]["content"]["parts"][0]["text"][7:-3])
+                return (response_json["candidates"][0]["content"]["parts"][0]["text"])
+            elif response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="J" or response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="j":
+                    return (response_json["candidates"][0]["content"]["parts"][0]["text"][0][7:-3])
+            # elif response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="\"":
+                
+            else:
+                return (response_json["candidates"][0]["content"]["parts"][0]["text"][3:-3])
 
-# Specify the update operation (e.g., set a new value for a field)
-    update_operation = {"$set": {"history":conversation_history}}
+            # print(json.dumps(response_json, indent=2))
+            # print(response_json)
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return json.dump(
+            {
+                "msg":"Error Assessing AI"
+            }
+            ) 
 
-# Perform the update for a single document
-    result = collection.update_one(filter_criteria, update_operation)
-    db.chat.insert_one(
-    {"userid": user_id, "history":conversation_history})
-    
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
-    return jsonify({"history":conversation_history})
+
+# ... (your existing code)
+if __name__ == '__main__':
+    app.run(debug=True)
