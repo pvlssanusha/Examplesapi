@@ -65,6 +65,7 @@ def get_response():
             # Parse and print the response JSON
             response_json = response.json()
             print(response_json)
+            #print(response_json)
             if (response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="{"):
             #print(response_json["candidates"][0]["content"]["parts"][0]["text"][7:-3])
                 return (response_json["candidates"][0]["content"]["parts"][0]["text"])
@@ -90,5 +91,9 @@ def get_response():
 
 
 # ... (your existing code)
+
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
