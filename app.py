@@ -64,17 +64,17 @@ def get_response():
         if response.status_code == 200:
             # Parse and print the response JSON
             response_json = response.json()
-            print(response_json)
+            #print(response_json)
             #print(response_json)
             if (response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="{"):
             #print(response_json["candidates"][0]["content"]["parts"][0]["text"][7:-3])
-                return (response_json["candidates"][0]["content"]["parts"][0]["text"])
+                return (response_json["candidates"][0]["content"]["parts"][0]["text"]).replace("json", '')
             elif response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="J" or response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="j":
-                    return (response_json["candidates"][0]["content"]["parts"][0]["text"][0][7:-3])
+                    return (response_json["candidates"][0]["content"]["parts"][0]["text"][0][7:-3]).replace("json", '')
             # elif response_json["candidates"][0]["content"]["parts"][0]["text"][0]=="\"":
                 
             else:
-                return (response_json["candidates"][0]["content"]["parts"][0]["text"][3:-3])
+                return (response_json["candidates"][0]["content"]["parts"][0]["text"][3:-3]).replace("json", '')
 
             # print(json.dumps(response_json, indent=2))
             # print(response_json)
@@ -91,6 +91,19 @@ def get_response():
 
 
 # ... (your existing code)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
