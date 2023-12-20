@@ -36,8 +36,8 @@ def get_response():
                             "text": 
                             f'''
         This is the course {course} and the  submodule {submodule}.
-            Create 3  descriptive examples for the submodule{submodule} to understand the submodule concept better
-            Give the output  examples in json format as code block:
+            Create 3 only descriptive examples for the submodule{submodule} to understand the submodule concept better
+            Give the output  examples in the array of strings only
             {{
                 "examples":["strings"]
             }}
